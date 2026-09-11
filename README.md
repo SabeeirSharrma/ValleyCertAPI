@@ -240,7 +240,147 @@ Certificates are scoped to specific capabilities. Each grants one type of access
 | `MIGRATION_ACCESS` | Allows accessing protected migration APIs |
 | `CERTIFICATE_MANAGEMENT` | Allows certificate management operations |
 
-## Deployment (Running your own ValleyAuth certificate API)
+## Deployment
+
+ValleyCert is recommended to be self-hosted. You control your own CA keys, certificates, and revocation. The public instance at `cert.valleyrealm.qd.je` is for testing only.
+
+### Prerequisites
+
+- Java 21 or later
+- A domain name pointing to your server (e.g., `cert.your-domain.com`)
+- Nginx or another reverse proxy for TLS termination
+- (Optional) Let's Encrypt for free SSL certificates
+
+### Step 1: Build the JAR
+
+```bash
+git clone https://github.com/SabeeirSharrma/ValleyCertAPI.git
+cd ValleyCertAPI
+./gradlew shadowJar
+```
+
+The fat JAR is at `build/libs/valleycert-api-0.1.0-alpha.jar`.
+
+### Step 2: First run
+
+```bash
+java -jar build/libs/valleycert-api-0.1.0-alpha.jar 8443
+```
+
+On first run, the CA will:
+
+1. Generate an ECDSA P-256 key pair (stored in `data/keys/`)
+2. Generate an AES-256 revocation key (stored in `data/keys/revocation.key`)
+3. Start the HTTP server on port 8443
+
+Verify it's running:
+
+```bash
+curl http://localhost:8443/api/certificate/validate/test
+# Should return: {"valid":false,"certificateId":"test"}
+```
+
+### Step 3: Set up Nginx
+
+Point your domain at the certapi with TLS. Example Nginx config:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name cert.your-domain.com;
+
+    ssl_certificate     /etc/letsencrypt/live/cert.your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/cert.your-domain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8443;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Test and reload:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Step 4: Set up as a systemd service
+
+Create `/etc/systemd/system/valleycert.service`:
+
+```ini
+[Unit]
+Description=ValleyCert API Certificate Authority
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/valleycert
+ExecStart=/usr/bin/java -jar build/libs/valleycert-api-0.1.0-alpha.jar 8443
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Adjust `User` and `WorkingDirectory` to your setup. Then:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable valleycert
+sudo systemctl start valleycert
+```
+
+Check status:
+
+```bash
+sudo systemctl status valleycert
+sudo journalctl -u valleycert -f
+```
+
+### Step 5: Configure ValleyAuth to use your CA
+
+In your MC server's `plugins/ValleyAuth/config.yml`:
+
+```yaml
+certificate:
+  api-url: "https://cert.your-domain.com"
+```
+
+Restart the MC server. ValleyAuth will request a certificate from your CA on first launch.
+
+### How the flow works
+
+1. ValleyAuth starts and calls `POST /api/certificate/issue` on your CA
+2. The CA generates a certificate, signs it with ECDSA P-256, and returns it
+3. ValleyAuth stores the certificate locally at `plugins/ValleyAuth/data/core-cert.json`
+4. On subsequent startups, ValleyAuth loads the cached certificate
+5. If the certificate is expired, ValleyAuth requests a renewal via `POST /api/certificate/renew`
+6. If the CA is unreachable, ValleyAuth runs in offline mode using cached certificates
+7. Other plugins can validate their certificates via `GET /api/certificate/validate/:id`
+
+### Data storage
+
+All data is stored in `./data/` relative to where you run the JAR:
+
+```
+data/
+  keys/
+    ca-private.key      ECDSA P-256 private key (never share)
+    ca-public.key       ECDSA P-256 public key
+    revocation.key      AES-256 key for revocation timestamps
+  certificates/
+    <certificate-id>.json   Individual certificate files
+```
+
+**Back up `data/keys/` regularly.** If `ca-private.key` is lost, all certificates must be reissued.
 
 ## Building from Source
 
