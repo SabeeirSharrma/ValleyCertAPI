@@ -36,9 +36,9 @@ Issue a new certificate for a plugin.
 }
 ```
 
-- `pluginId` (required) — unique identifier for the plugin or addon
-- `capabilities` (required) — list of capabilities to grant. Must be valid: `VLINK`, `IDENTITY_LINK`, `RANK_SHARE`, `MIGRATION_PROVIDER`, `MIGRATION_ACCESS`, `CERTIFICATE_MANAGEMENT`
-- `requestedValidityDays` (required) — how many days the certificate should live (capped at 120)
+- `pluginId` (required): unique identifier for the plugin or addon
+- `capabilities` (required): list of capabilities to grant. Must be valid: `VLINK`, `IDENTITY_LINK`, `RANK_SHARE`, `MIGRATION_PROVIDER`, `MIGRATION_ACCESS`, `CERTIFICATE_MANAGEMENT`
+- `requestedValidityDays` (required): how many days the certificate should live (capped at 120)
 
 **Response (200):**
 
@@ -97,8 +97,8 @@ Renew an existing certificate. The old certificate is revoked automatically, and
 }
 ```
 
-- `certificateId` (required) — ID of the certificate to renew
-- `validityDays` (required) — new validity period in days
+- `certificateId` (required): ID of the certificate to renew
+- `validityDays` (required): new validity period in days
 
 **Response (200):**
 
@@ -134,8 +134,8 @@ Revoke a certificate. Stores an AES-GCM encrypted timestamp of when the revocati
 }
 ```
 
-- `certificateId` (required) — ID of the certificate to revoke
-- `reason` (optional) — human-readable reason (logged, not stored in the certificate)
+- `certificateId` (required): ID of the certificate to revoke
+- `reason` (optional): human-readable reason (logged, not stored in the certificate)
 
 **Response (200):**
 
