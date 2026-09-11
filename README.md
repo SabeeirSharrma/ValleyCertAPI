@@ -15,7 +15,7 @@ Revocation uses encrypted timestamps rather than a traditional CRL. When a certi
 All endpoints return JSON. The base path is `/api/certificate`.
 
 | Method | Path | Description |
-|--------|------|-------------|
+| -------- | ------ | ------------- |
 | `POST` | `/api/certificate/issue` | Issue a new certificate |
 | `POST` | `/api/certificate/renew` | Renew an existing certificate |
 | `POST` | `/api/certificate/revoke` | Revoke a certificate |
@@ -163,6 +163,7 @@ curl -X POST https://cert.valleyrealm.qd.je/api/certificate/revoke \
 Check whether a certificate is currently valid. Returns a boolean. This is what downstream services call before trusting a certificate.
 
 Validation checks in order:
+
 1. Certificate exists
 2. ECDSA signature is valid
 3. Revocation timestamp (if present) decrypts and elapsed time hasn't exceeded the original lifetime
@@ -231,7 +232,7 @@ curl https://cert.valleyrealm.qd.je/api/certificate/550e8400-e29b-41d4-a716-4466
 Certificates are scoped to specific capabilities. Each grants one type of access. Having one does not grant another.
 
 | Capability | Description |
-|------------|-------------|
+| ------------ | ------------- |
 | `VLINK` | Allows VLink operations for identity linking |
 | `IDENTITY_LINK` | Allows linking identities across platforms |
 | `RANK_SHARE` | Allows sharing ranks across linked identities |
@@ -239,7 +240,25 @@ Certificates are scoped to specific capabilities. Each grants one type of access
 | `MIGRATION_ACCESS` | Allows accessing protected migration APIs |
 | `CERTIFICATE_MANAGEMENT` | Allows certificate management operations |
 
-## Deployment
+## Deployment (Running your own ValleyAuth certificate API)
+
+## Building from Source
+
+Prerequisites: Java 21+
+
+```bash
+git clone https://github.com/SabeeirSharrma/ValleyCertAPI.git
+cd ValleyCertAPI
+./gradlew shadowJar
+```
+
+The fat JAR lands at `build/libs/valleycertapi-1.0.0.jar`.
+
+To run directly without the JAR:
+
+```bash
+./gradlew run
+```
 
 ### Running the JAR
 
@@ -300,11 +319,13 @@ Every certificate is signed with **ECDSA P-256** (secp256r1) using **SHA-256with
 Instead of a traditional CRL or OCSP responder, revocation is tracked as a single **AES-256-GCM** encrypted timestamp per certificate. The revocation key is generated on first run and stored at `data/keys/revocation.key`.
 
 When a certificate is revoked:
+
 1. The current timestamp (milliseconds since epoch) is encrypted with AES-GCM using a random 12-byte IV
 2. The IV is prepended to the ciphertext
 3. The combined value is Base64-encoded and stored alongside the certificate
 
 When validating:
+
 1. The encrypted timestamp is decrypted
 2. Elapsed time is computed: `now - revocationTimestamp`
 3. If elapsed time exceeds the certificate's original lifetime (expiration - issuance), the certificate is invalid
@@ -314,7 +335,7 @@ When validating:
 ### Key Management
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `data/keys/ca-private.key` | ECDSA P-256 private key (Base64-encoded PKCS#8) |
 | `data/keys/ca-public.key` | ECDSA P-256 public key (Base64-encoded X.509) |
 | `data/keys/revocation.key` | AES-256 encryption key for revocation timestamps |
@@ -334,8 +355,8 @@ Guard these files. If `ca-private.key` is compromised, every certificate signed 
 Prerequisites: Java 21+
 
 ```bash
-git clone <repo-url>
-cd certapi
+git clone https://github.com/SabeeirSharrma/ValleyCertAPI.git
+cd ValleyCertAPI
 ./gradlew shadowJar
 ```
 
