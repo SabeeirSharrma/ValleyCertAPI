@@ -25,7 +25,7 @@ A self-hosted Certificate Authority service for the ValleyAuth ecosystem. Issues
 
 ValleyCertAPI is the root of trust for ValleyAuth. It acts as a private Certificate Authority that issues short-lived, capability-scoped certificates to plugins and addons in the ValleyRealm ecosystem. Each certificate grants only the specific permissions the holder needs, nothing more.
 
-You run your own instance. You control the signing keys, the revocation logic, and the data. The public instance at `cert.valleyrealm.qd.je` exists for testing only.
+You run your own instance. You control the signing keys, the revocation logic, and the data. The public instance at `cert.strawberry.dpdns.org` exists for testing only.
 
 ## What It Does
 
