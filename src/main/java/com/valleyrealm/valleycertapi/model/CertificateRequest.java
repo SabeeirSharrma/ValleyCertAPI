@@ -7,9 +7,16 @@ import java.util.List;
  */
 public class CertificateRequest {
 
-    private final String pluginId;
-    private final List<String> capabilities;
-    private final int requestedValidityDays;
+    private String pluginId;
+    private List<String> capabilities;
+    private int requestedValidityDays;
+
+    // No-arg constructor for Gson deserialization (Java 21 compatibility)
+    public CertificateRequest() {
+        this.pluginId = "";
+        this.capabilities = List.of();
+        this.requestedValidityDays = 30;
+    }
 
     public CertificateRequest(String pluginId, List<String> capabilities, int requestedValidityDays) {
         this.pluginId = pluginId;

@@ -26,12 +26,17 @@ public class Certificate {
 
     private String signature;
 
-    /**
-     * Encrypted revocation timestamp. Null means the certificate has not been revoked.
-     * When non-null, this is the CA-encrypted form of the revocation timestamp (millis since epoch).
-     * Never stored or transmitted in plaintext.
-     */
     private String encryptedRevocationTimestamp;
+
+    // No-arg constructor for Gson deserialization (Java 21 compatibility)
+    public Certificate() {
+        this.certificateId = "";
+        this.pluginId = "";
+        this.capabilities = List.of();
+        this.issuanceDate = new Date();
+        this.expirationDate = new Date();
+        this.issuer = "";
+    }
 
     public Certificate(String certificateId, String pluginId, List<Capability> capabilities,
                       Date issuanceDate, Date expirationDate, String issuer) {

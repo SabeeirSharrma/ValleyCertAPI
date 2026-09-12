@@ -1,9 +1,16 @@
 package com.valleyrealm.valleycertapi.api;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.valleyrealm.valleycertapi.crypto.CertificateAuthority;
 import com.valleyrealm.valleycertapi.model.Certificate;
 import com.valleyrealm.valleycertapi.model.CertificateRequest;
+
+import java.util.Date;
 
 import static spark.Spark.*;
 
@@ -26,7 +33,10 @@ public class CertificateApi {
     public CertificateApi(int port, CertificateAuthority ca) {
         this.port = port;
         this.ca = ca;
-        this.gson = new Gson();
+        this.gson = new GsonBuilder()
+            .registerTypeAdapter(java.util.Date.class, (JsonSerializer<Date>) (src, typeOfSrc, context) ->
+                new JsonPrimitive(src.getTime()))
+            .create();
     }
 
     /**
