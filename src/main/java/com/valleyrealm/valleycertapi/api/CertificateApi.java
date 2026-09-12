@@ -112,6 +112,21 @@ public class CertificateApi {
                     
                     return gson.toJson(new CertificateResponse(true, "Certificate found", cert));
                 });
+
+                // Get certificate by plugin ID
+                get("/plugin/:pluginId", (req, res) -> {
+                    res.type("application/json");
+
+                    String pluginId = req.params(":pluginId");
+                    Certificate cert = ca.getStore().getCertificate(pluginId);
+
+                    if (cert == null) {
+                        res.status(404);
+                        return gson.toJson(new CertificateResponse(false, "No certificate found for plugin: " + pluginId, null));
+                    }
+
+                    return gson.toJson(new CertificateResponse(true, "Certificate found", cert));
+                });
             });
         });
 
